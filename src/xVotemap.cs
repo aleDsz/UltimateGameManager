@@ -19,6 +19,7 @@ using PRoCon.Core;
 using PRoCon.Core.Plugin;
 using PRoCon.Core.Players;
 using PRoCon.Core.Maps;
+using System.Reflection;
 
 namespace PRoConEvents
 {
@@ -2435,16 +2436,8 @@ namespace PRoConEvents
 
                 SetMap(m_listMapOptions[winner], m_listGamemodeOptions[winner]);
 
-                // send infomation to UMM and ProconRulz just in case maplist changes at EOR
-                foreach (string item in this.lstPluginCall)
-                {
-                    string[] splitted = item.Split('|');
-
-                    if (splitted.Length > 1)
-                    {
-                        this.ExecuteCommand("procon.protected.plugins.call", splitted[0], splitted[1], m_listMapOptions[winner], m_listGamemodeOptions[winner]);
-                    }
-                }
+                // send infomation to other plugins just in case maplist changes at EOR
+                DispatchToPlugins(m_listMapOptions[winner], m_listGamemodeOptions[winner]);
             }
             else
             {
@@ -2494,6 +2487,23 @@ namespace PRoConEvents
         #endregion
 
         #region Tools
+
+        private void DispatchToPlugins(string mapFileName, string gameMode)
+        {
+            foreach (string item in this.lstPluginCall)
+            {
+                WritePluginConsole("Using " + item + " to call plugin", "PluginCall", 5);
+                string[] splitted = item.Split('@');
+
+                if (splitted.Length > 1)
+                {
+                    string plugin = splitted[0];
+                    string method = splitted[1];
+                    WritePluginConsole("Calling ^b" + plugin + " ^nto call ^b" + method, "PluginCall", 5);
+                    this.ExecuteCommand("procon.protected.plugins.call", plugin, method, mapFileName, gameMode);
+                }
+            }
+        }
 
         private void SetMap(string mapName, string gamemode)
         {
@@ -2567,7 +2577,7 @@ namespace PRoConEvents
                     return "[CAL]";
                 case "CarrierAssaultSmall0":
                     return "[CA]";
-                case "SquadObliteration":
+                case "SquadObliteration0":
                     return "[SQOB]";
 
                 default:
